@@ -144,12 +144,7 @@
   - [LiveKit Cloud Account](https://cloud.livekit.io)
 
 ### **Installation Steps**
-
-#### 1️⃣ **Clone the Repository**
-```bash
-git clone https://github.com/Umar5199/Ai-voice-Agent.git
-cd Ai-voice-Agent
-**2️⃣ Set Up Environment Variables
+**1.Set Up Environment Variables
 Create a .env file in the root directory:
 # LiveKit Cloud Credentials
 LIVEKIT_URL=wss://your-project.livekit.cloud
@@ -160,13 +155,13 @@ LIVEKIT_API_SECRET=your_livekit_secret
 GOOGLE_API_KEY=your_gemini_api_key
 GLADIA_API_KEY=your_gladia_api_key
 DEEPGRAM_API_KEY=your_deepgram_api_key**
-3️⃣ Build Docker Images
+2. Build Docker Images
 docker-compose build
-4️⃣ Start the Containers
+3.Start the Containers
 docker-compose up -d
-5️⃣ Verify Everything is Running
+4. Verify Everything is Running
 docker ps
-You should see 3 running containers:
+5.You should see 3 running containers:
 
 voice-agent
 
@@ -174,9 +169,15 @@ voice-backend
 
 voice-frontend
 
-6️⃣ Access Your Voice Agent
+ Access Your Voice Agent
 Local Access: http://localhost:8080
 
 Public Access (using ngrok):
 
 ngrok http 8080
+
+#### 6. **Clone the Repository**
+```bash
+git clone https://github.com/Umar5199/Ai-voice-Agent.git
+cd Ai-voice-Agent
+
