@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Test</title>
+</head>
+<body>
+    <h1>Audio Test</h1>
+    <button onclick="testAudio()">Test Audio</button>
+    <div id="status"></div>
+
+    <script>
+        async function testAudio() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Testing...';
+            
+            try {
+                // Test Deepgram directly
+                const response = await fetch('https://api.deepgram.com/v1/speak', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Token bf190370a215ab581862ff00d853054afd90be63',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: 'Hello, this is a test'
+                    })
+                });
+                
+                if (response.ok) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    
+                    audio.onplay = () => status.innerHTML = '✅ Audio playing...';
+                    audio.onended = () => status.innerHTML = '✅ Test complete';
+                    audio.onerror = (e) => status.innerHTML = '❌ Error: ' + e;
+                    
+                    audio.play();
+                } else {
+                    status.innerHTML = '❌ API Error: ' + response.status;
+                }
+            } catch (e) {
+                status.innerHTML = '❌ Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+.env
+.env.local
+.env.*.local
+
+# Docker
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.py
+*.wav
+*.mp3
+test_audio.wav
+test.wav
+
+# Secrets
+*.key
+*.pem
+*.crt
+secrets/
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Project specific
+gram.py
+test_gemini.py
+test_gladia.py
+*.pyc
