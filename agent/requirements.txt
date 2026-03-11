@@ -1,0 +1,3 @@
+livekit-agents[google,deepgram,gladia]~=1.3
+livekit-plugins-silero
+python-dotenv

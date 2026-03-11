@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: voice-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - voice-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: voice-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - voice-network
+    restart: unless-stopped
+
+  agent:
+    build: ./agent
+    container_name: voice-agent
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    networks:
+      - voice-network
+    restart: unless-stopped
+
+networks:
+  voice-network:
+    driver: bridge

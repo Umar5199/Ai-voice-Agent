@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Agent Dashboard</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .status-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .status-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .conversation-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .agent-message {
+            background: #28a745;
+            color: white;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .system-message {
+            background: #6c757d;
+            color: white;
+            margin: 10px auto;
+            text-align: center;
+            max-width: 60%;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            background: #dc3545;
+            color: white;
+            margin: 10px auto;
+            text-align: center;
+            max-width: 90%;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .message-time {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .api-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .api-card {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .api-card.gladia { background: #e3f2fd; }
+        .api-card.gemini { background: #fff3e0; }
+        .api-card.deepgram { background: #e8f5e8; }
+        
+        .voice-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .wave {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 30px;
+        }
+        
+        .wave span {
+            width: 4px;
+            height: 100%;
+            background: #007bff;
+            border-radius: 4px;
+            animation: wave 1s infinite ease-in-out;
+        }
+        
+        .wave span:nth-child(2) { animation-delay: 0.1s; }
+        .wave span:nth-child(3) { animation-delay: 0.2s; }
+        .wave span:nth-child(4) { animation-delay: 0.3s; }
+        .wave span:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .quota-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🎤 AI Voice Agent
+            <span class="status-badge" id="connectionBadge">Disconnected</span>
+        </h1>
+        <div class="subtitle">Powered by Gemini + Gladia + Deepgram</div>
+        
+        <!-- API Status Panel -->
+        <div class="api-status">
+            <div class="api-card gladia" id="gladiaStatus">
+                <div>🎤 Gladia STT</div>
+                <div style="font-size: 12px; margin-top: 5px;">Checking...</div>
+            </div>
+            <div class="api-card gemini" id="geminiStatus">
+                <div>🧠 Gemini LLM</div>
+                <div style="font-size: 12px; margin-top: 5px;">Checking...</div>
+            </div>
+            <div class="api-card deepgram" id="deepgramStatus">
+                <div>🗣️ Deepgram TTS</div>
+                <div style="font-size: 12px; margin-top: 5px;">Checking...</div>
+            </div>
+        </div>
+        
+        <!-- Main Status Panel -->
+        <div class="status-panel">
+            <div class="status-item">
+                <div class="status-label">Connection</div>
+                <div class="status-value" id="connectionStatus">Disconnected</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Agent State</div>
+                <div class="status-value" id="agentState">Idle</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Microphone</div>
+                <div class="status-value" id="micStatus">Off</div>
+            </div>
+        </div>
+        
+        <!-- Quota Warning (hidden by default) -->
+        <div id="quotaWarning" class="quota-warning hidden">
+            ⚠️ Gemini API quota exceeded. Using fallback responses. Will retry in 60 seconds.
+        </div>
+        
+        <!-- Error Display -->
+        <div id="errorDisplay" class="error-message hidden"></div>
+        
+        <!-- Conversation Display -->
+        <div class="conversation-container" id="conversation">
+            <div class="system-message">
+                👋 Welcome! Click "Connect" to start speaking
+                <div class="message-time">Just now</div>
+            </div>
+        </div>
+        
+        <!-- Voice Activity Indicator -->
+        <div class="voice-indicator" id="voiceIndicator">
+            <span id="voiceText">Not listening</span>
+            <div class="wave" id="waveform">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn-primary" id="connectBtn" onclick="connect()">
+                <span>🔌</span> Connect
+            </button>
+            <button class="btn-danger" id="disconnectBtn" onclick="disconnect()" disabled>
+                <span>⏹️</span> Disconnect
+            </button>
+        </div>
+        
+        <!-- Debug Info -->
+        <div style="font-size: 12px; color: #999; text-align: center; margin-top: 20px;" id="debugInfo">
+            🔄 Checking connection...
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+  TOKEN_SERVER: 'http://172.18.0.1:8000',
+    LIVEKIT_URL: 'wss://voice-agent-sukx68n0.livekit.cloud'
+};
+
+        // State variables
+        let room = null;
+        let audioContext = null;
+        let analyser = null;
+        let animationFrame = null;
+        let conversationHistory = [];
+        let apiStatus = {
+            gladia: 'unknown',
+            gemini: 'unknown',
+            deepgram: 'unknown'
+        };
+        let quotaRetryTimer = null;
+        let reconnectAttempts = 0;
+
+        // Initialize
+        window.onload = function() {
+            checkTokenServer();
+            addMessage('system', '👋 Welcome! Click "Connect" to start speaking');
+        };
+
+        // Check token server with better error handling
+        async function checkTokenServer() {
+            const debugEl = document.getElementById('debugInfo');
+            try {
+                const response = await fetch(`${CONFIG.TOKEN_SERVER}/get_token?room=test`, {
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    debugEl.innerHTML = '✅ Token Server: Connected';
+                    debugEl.style.color = '#28a745';
+                    updateApiStatus('all', 'connected');
+                    reconnectAttempts = 0;
+                } else {
+                    debugEl.innerHTML = '❌ Token Server: Error ' + response.status;
+                    debugEl.style.color = '#dc3545';
+                }
+            } catch (error) {
+                debugEl.innerHTML = '❌ Token Server: Cannot connect - make sure backend is running on port 8000';
+                debugEl.style.color = '#dc3545';
+                console.error('Token server check failed:', error);
+                
+                // Retry after 3 seconds
+                reconnectAttempts++;
+                if (reconnectAttempts < 3) {
+                    setTimeout(checkTokenServer, 3000);
+                }
+            }
+        }
+
+        // Main connect function with better error handling
+        async function connect() {
+            try {
+                updateUIForConnecting();
+                hideError();
+                
+                // Get token with timeout
+                addMessage('system', '🔌 Requesting access token...');
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${CONFIG.TOKEN_SERVER}/get_token?room=test-room-${Date.now()}`, {
+                    signal: controller.signal,
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`Token server error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                addMessage('system', '✅ Token received');
+                
+                if (!data.token) {
+                    throw new Error('No token in response');
+                }
+                
+                // Create room
+                room = new LivekitClient.Room({
+                    adaptiveStream: true,
+                    dynacast: true
+                });
+                
+                // Setup event handlers
+                setupRoomHandlers(room);
+                
+                // Connect with timeout
+                addMessage('system', '🔄 Connecting to LiveKit...');
+                await room.connect(CONFIG.LIVEKIT_URL, data.token);
+                
+                // Enable microphone
+                addMessage('system', '🎤 Enabling microphone...');
+                await room.localParticipant.setMicrophoneEnabled(true);
+                
+                updateUIForConnected();
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    handleError('Connection timeout', new Error('Request took too long - check if backend is running'));
+                } else {
+                    handleError('Connection failed', error);
+                }
+                updateUIForDisconnected();
+            }
+        }
+
+        // Setup room event handlers
+        function setupRoomHandlers(room) {
+            room.on(LivekitClient.RoomEvent.Connected, () => {
+                addMessage('system', '✅ Connected to voice agent');
+                updateApiStatus('all', 'connected');
+            });
+            
+            room.on(LivekitClient.RoomEvent.Disconnected, () => {
+                addMessage('system', '❌ Disconnected from agent');
+                updateUIForDisconnected();
+            });
+            
+            room.on(LivekitClient.RoomEvent.TrackSubscribed, (track) => {
+                if (track.kind === 'audio') {
+                    track.attach();
+                    updateAgentState('speaking');
+                    addMessage('agent', '🗣️ [Agent is speaking...]');
+                    
+                    setTimeout(() => {
+                        updateAgentState('listening');
+                    }, 2000);
+                }
+            });
+            
+            setInterval(() => {
+                if (room?.localParticipant?.audioLevel > 0.01) {
+                    updateUserSpeaking(true);
+                } else {
+                    updateUserSpeaking(false);
+                }
+            }, 100);
+        }
+
+        // Add message to conversation
+        function addMessage(type, text) {
+            const conversation = document.getElementById('conversation');
+            const messageDiv = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            
+            let className = '';
+            let prefix = '';
+            
+            switch(type) {
+                case 'user':
+                    className = 'user-message';
+                    prefix = '👤 You';
+                    break;
+                case 'agent':
+                    className = 'agent-message';
+                    prefix = '🤖 Agent';
+                    break;
+                case 'error':
+                    className = 'error-message';
+                    prefix = '⚠️ Error';
+                    break;
+                default:
+                    className = 'system-message';
+                    prefix = '📢 System';
+            }
+            
+            messageDiv.className = `message ${className}`;
+            
+            if (text.includes('quota') || text.includes('429')) {
+                messageDiv.innerHTML = `
+                    <strong>⚠️ QUOTA ERROR:</strong> ${text}<br>
+                    <small>Gemini API limit reached. Waiting 60 seconds...</small>
+                    <div class="message-time">${time}</div>
+                `;
+                showQuotaWarning();
+            } else {
+                messageDiv.innerHTML = `
+                    <strong>${prefix}:</strong> ${text}
+                    <div class="message-time">${time}</div>
+                `;
+            }
+            
+            conversation.appendChild(messageDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+            conversationHistory.push({ type, text, time });
+        }
+
+        function updateUserSpeaking(isSpeaking) {
+            const voiceText = document.getElementById('voiceText');
+            const waveform = document.getElementById('waveform');
+            
+            if (isSpeaking) {
+                voiceText.innerHTML = '🎤 You are speaking...';
+                waveform.style.opacity = '1';
+            } else {
+                voiceText.innerHTML = '👂 Listening...';
+                waveform.style.opacity = '0.5';
+            }
+        }
+
+        function updateAgentState(state) {
+            const agentStateEl = document.getElementById('agentState');
+            const states = {
+                'listening': '👂 Listening',
+                'speaking': '🗣️ Speaking',
+                'thinking': '🧠 Thinking',
+                'idle': '💤 Idle'
+            };
+            
+            agentStateEl.innerHTML = states[state] || states.idle;
+            
+            if (state === 'thinking') {
+                addMessage('system', '🧠 Agent is thinking...');
+            }
+        }
+
+        function updateApiStatus(api, status) {
+            const colors = {
+                'connected': '#28a745',
+                'error': '#dc3545',
+                'warning': '#ffc107',
+                'unknown': '#6c757d'
+            };
+            
+            const texts = {
+                'connected': '✅ Connected',
+                'error': '❌ Error',
+                'warning': '⚠️ Quota Exceeded',
+                'unknown': '⏳ Checking...'
+            };
+            
+            if (api === 'all') {
+                document.getElementById('gladiaStatus').innerHTML = `
+                    <div>🎤 Gladia STT</div>
+                    <div style="font-size: 12px; color: ${colors[status]}">${texts[status]}</div>
+                `;
+                document.getElementById('geminiStatus').innerHTML = `
+                    <div>🧠 Gemini LLM</div>
+                    <div style="font-size: 12px; color: ${colors[status]}">${texts[status]}</div>
+                `;
+                document.getElementById('deepgramStatus').innerHTML = `
+                    <div>🗣️ Deepgram TTS</div>
+                    <div style="font-size: 12px; color: ${colors[status]}">${texts[status]}</div>
+                `;
+            }
+        }
+
+        function showQuotaWarning() {
+            const warning = document.getElementById('quotaWarning');
+            warning.classList.remove('hidden');
+            updateApiStatus('gemini', 'warning');
+            
+            if (quotaRetryTimer) clearTimeout(quotaRetryTimer);
+            quotaRetryTimer = setTimeout(() => {
+                warning.classList.add('hidden');
+                updateApiStatus('gemini', 'connected');
+            }, 60000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorDisplay');
+            errorDiv.innerHTML = `❌ ${message}`;
+            errorDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function hideError() {
+            document.getElementById('errorDisplay').classList.add('hidden');
+        }
+
+        function handleError(context, error) {
+            console.error(context, error);
+            addMessage('error', `${context}: ${error.message}`);
+            showError(error.message);
+            
+            if (error.message.includes('429') || error.message.includes('quota')) {
+                showQuotaWarning();
+            }
+        }
+
+        function updateUIForConnecting() {
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('connectionStatus').innerHTML = 'Connecting...';
+            document.getElementById('connectionBadge').innerHTML = 'Connecting';
+            document.getElementById('connectionBadge').className = 'status-badge badge-warning';
+        }
+
+        function updateUIForConnected() {
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            document.getElementById('connectionStatus').innerHTML = 'Connected ✅';
+            document.getElementById('connectionBadge').innerHTML = 'Connected';
+            document.getElementById('connectionBadge').className = 'status-badge badge-success';
+            document.getElementById('micStatus').innerHTML = 'On 🎤';
+            updateAgentState('listening');
+            document.getElementById('debugInfo').innerHTML = '✅ Connected to LiveKit';
+        }
+
+        function updateUIForDisconnected() {
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('connectionStatus').innerHTML = 'Disconnected';
+            document.getElementById('connectionBadge').innerHTML = 'Disconnected';
+            document.getElementById('connectionBadge').className = 'status-badge badge-danger';
+            document.getElementById('micStatus').innerHTML = 'Off';
+            updateAgentState('idle');
+            checkTokenServer(); // Recheck token server
+        }
+
+        function disconnect() {
+            if (room) {
+                room.disconnect();
+                room = null;
+            }
+            updateUIForDisconnected();
+            addMessage('system', '👋 Disconnected by user');
+        }
+    </script>
+</body>
+</html>
